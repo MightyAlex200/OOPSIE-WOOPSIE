@@ -23,18 +23,125 @@ testRequest.send();
 
 function onRequestLoad() {
     if(this.status != 200) {
-        OOPSIE_WOOPSIE();
+        OOPSIE_WOOPSIE(this.status);
     }
 }
 
-function OOPSIE_WOOPSIE() {
+function OOPSIE_WOOPSIE(status) {
     console.error(copypasta.join(' '))
-    for(element of document.children) {
-        element.remove();
+    let errorHeader = findErrorHeader(status);
+    if (errorHeader) {
+        deleteEverythingOnSameLevel(errorHeader);
+        console.log("found errorHeader");
+        console.log(errorHeader);
+
+        let errorDescription = findErrorDescription(errorHeader);
+        errorHeader.innerHTML = copypasta[0];
+        if (errorDescription) {
+            errorDescription.innerHTML = copypasta[1];
+            deleteEverythingOnSameLevel(errorDescription);
+        }
+    } else {
+        nothingWorked();
+    }
+}
+
+function findErrorHeader(status) {
+    let header;
+    // Current methods of finding the error header:
+    // 1. Find the first element with the status code in it then remove the text in elements on it's level
+    // 2. Find the first element with text in an element with class or id called "error"
+    
+    let allElements = getAllElements();
+
+    header = allElements.find(e => e.innerHTML.includes(status.toString()));
+
+    if (!header) {
+        header = allElements.find(e =>
+            e.classList.toString().toLowerCase().includes("error")
+            || e.id.toLowerCase().includes("error")
+        );
     }
 
+    return header;
+}
+
+function findErrorDescription(errorHeader) {
+    // Current methods of finding the error description:
+    // 1. Find the first element directly after the header with text
+    let allElements = getAllElements();
+    allElements = allElements.slice(allElements.indexOf(errorHeader)+1);
+    let errorDescription = allElements.find(e => {
+        let text = "";
+        for (let childNode of e.childNodes) {
+            if (childNode.nodeType == 3) {
+                text += childNode.nodeValue;
+            }
+        }
+        return !!text
+    });
+
+    return errorDescription;
+}
+
+function deleteEverythingOnSameLevel(safeText) {
+    getAllElements().forEach(e => {
+        let eBoundBox = e.getBoundingClientRect();
+        let dBoundBox = safeText.getBoundingClientRect();
+        if (e == safeText) { return; }
+        if (
+            eBoundBox.top <= dBoundBox.bottom &&
+            eBoundBox.bottom >= dBoundBox.top
+        ) {
+            // delete textnodes
+            for (let childNode of e.childNodes) {
+                if (childNode.nodeType == 3) {
+                    childNode.remove();
+                }
+            }
+        }
+    });
+}
+
+function getAllElements() {
+    let allElements = [];
+    iterateElement(document, element => {
+        if (element.getBoundingClientRect && !domRectIsEmpty(element.getBoundingClientRect())) {
+            allElements.push(element);
+        }
+    });
+    return allElements;
+}
+
+function nothingWorked() {
+    for (let element of document.children) {
+        element.remove();
+    }
+    
     let error = document.createElement("html");
     error.innerHTML = errorHTML;
     document.appendChild(error);
     document.title = copypasta[0];
+}
+
+function iterateElement(element, func) {
+    if (element.children instanceof HTMLCollection) {
+        for (let subElement of element.children) {
+            iterateElement(subElement, func);
+        }
+    }
+    func(element);
+}
+
+function htmlCollectionToArray(collection) {
+    let returnValue = [];
+    for (let i of collection) {
+        returnValue.push(i);
+    }
+    return returnValue;
+}
+
+function domRectIsEmpty(domRect) {
+    return domRect.width == 0
+        && domRect.height == 0;
 }
