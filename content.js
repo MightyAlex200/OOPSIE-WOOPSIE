@@ -22,7 +22,7 @@ testRequest.open("GET", location.href);
 testRequest.send();
 
 function onRequestLoad() {
-    if(this.status != 200) {
+    if(!this.status.toString().startsWith("2")) { // technically, I could have done startsWith(2) because 2 == "2" but that would be naughty uwu
         OOPSIE_WOOPSIE(this.status);
     }
 }
