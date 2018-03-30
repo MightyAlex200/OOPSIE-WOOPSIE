@@ -51,7 +51,7 @@ function findErrorHeader(status) {
     // Current methods of finding the error header:
     // 1. Find the first element with the status code in it then remove the text in elements on it's level
     // 2. Find the first element with text in an element with class or id called "error"
-    
+
     let allElements = getAllElements();
 
     header = allElements.find(e => e.innerHTML.includes(status.toString()));
@@ -73,7 +73,8 @@ function findErrorDescription(errorHeader) {
     allElements = allElements.slice(allElements.indexOf(errorHeader)+1);
     let errorDescription = allElements.find(e => {
         let text = "";
-        for (let childNode of e.childNodes) {
+        for (let i = 0; i < e.childNodes.length; i++) {
+            const childNode = e.childNodes[i];
             if (childNode.nodeType == 3) {
                 text += childNode.nodeValue;
             }
@@ -94,7 +95,8 @@ function deleteEverythingOnSameLevel(safeText) {
             eBoundBox.bottom >= dBoundBox.top
         ) {
             // delete textnodes
-            for (let childNode of e.childNodes) {
+            for (let i = 0; i < e.childNodes.length; i++) {
+                let childNode = e.childNodes[i];
                 if (childNode.nodeType == 3) {
                     childNode.remove();
                 }
@@ -114,10 +116,10 @@ function getAllElements() {
 }
 
 function nothingWorked() {
-    for (let element of document.children) {
-        element.remove();
+    for (let i = 0; i < document.children.length; i++) {
+        document.children[i].remove();
     }
-    
+
     let error = document.createElement("html");
     error.innerHTML = errorHTML;
     document.appendChild(error);
@@ -126,8 +128,8 @@ function nothingWorked() {
 
 function iterateElement(element, func) {
     if (element.children instanceof HTMLCollection) {
-        for (let subElement of element.children) {
-            iterateElement(subElement, func);
+        for (let i = 0; i < element.children.length; i++) {
+            iterateElement(element.children[i], func);
         }
     }
     func(element);
